@@ -1,0 +1,58 @@
+--- sdiodrv.c.orig
++++ sdiodrv.c
+@@
+-	ifcond = sdio_send_if_cond(dv,0x01a5);
++	ifcond = sdio_send_if_cond(dv,0x01a5);
+ 
+ 	hcs = dv->d_dev->sd_cmd;
+-	if (8 != (hcs & 0x80ff)) {
++	if (((hcs & (SDIO_CMD | SDIO_ERR | SDIO_CMDECODE)) != SDIO_CMDEOKAY)
++			|| ((hcs & 0x3f) != 8)) {
+ 		// An invalid response (such as no response) means the card
+ 		// does not recognize a CMD8, and therefore isn't of a new
+ 		// enough version to support high capacity
+-		hcs = 0;
+-
+ 		if (SDDEBUG) {
+ 			txstr("SDIO ERROR: IFCOND not acknowledged ");
+ 			txhex(hcs); txstr("\n");
+@@
+-	} else if (0xa5 != (ifcond & 0x0ff)) {
+-		// If the card responds, but with an invalid checksum, then ...
+-		// something went wrong.  Bail.
++		hcs = 0;
++	} else if (0x01a5 != (ifcond & 0x01ff)) {
++		// CMD8/R7 must echo the VHS/check-pattern argument.
+ 		TRIGGER_SCOPE;
+ 		RELEASE_MUTEX;
+ 
+@@
+-		do {
+-			// By spec, this may take up to a second
+-			op_cond = sdio_send_op_cond(dv, op_cond_query);
+-		} while(0 == (op_cond & 0x80000000));
++		{
++			unsigned tries = 1000;
++			do {
++				// By spec, this may take up to a second.  ACMD41
++				// returns R3, which has no valid CRC; trust the OCR
++				// value even if the command status reports CRC_ERR.
++				op_cond = sdio_send_op_cond(dv, op_cond_query);
++			} while((0 == (op_cond & 0x80000000)) && (--tries != 0));
++
++			if (0 == (op_cond & 0x80000000)) {
++				TRIGGER_SCOPE;
++				RELEASE_MUTEX;
++
++				if (SDDEBUG) {
++					txstr("SDIO ERROR: ACMD41 never became ready\n");
++					txstr("  arg    = "); txhex(op_cond_query); txstr("\n");
++					txstr("  OCR    = "); txhex(op_cond); txstr("\n");
++					txstr("  sd_cmd = "); txhex(dv->d_dev->sd_cmd); txstr("\n");
++				}
++				free(dv);
++				return NULL;
++			}
++		}
+ 	} if (SDINFO)
+ 		sdio_dump_ocr(dv);

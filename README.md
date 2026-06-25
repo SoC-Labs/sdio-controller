@@ -24,9 +24,11 @@ against the Synopsys VC-VIP-SOC eMMC/SD card UVM agent.
 ## Repository structure
 
 ```
-rtl/sdspi/    18 synthesisable RTL files (ZipCPU SDIO core, AXI-Lite + DMA path)
-sw/           sdiodrv.c and sdiodrv.h (AXI-Lite software driver)
-docs/         Verification reports (FPGA bring-up, Synopsys VIP)
+rtl/sdspi/        18 synthesisable RTL files (ZipCPU SDIO core, AXI-Lite + DMA path)
+sw/               sdiodrv.c and sdiodrv.h (AXI-Lite software driver)
+docs/             Verification reports (FPGA bring-up, Synopsys VIP)
+examples/pynq_z2/ Standalone PYNQ-Z2 Vivado project + Linux test harness --
+                  see examples/pynq_z2/README.md to build/regenerate and run it
 ```
 
 The `rtl/sdspi/` file list is exactly the set referenced by the SDIO IP
