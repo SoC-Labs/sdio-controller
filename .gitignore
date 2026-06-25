@@ -1,0 +1,19 @@
+# Vivado generated
+*.jou
+*.log
+*.str
+*.bit
+*.ltx
+*.mcs
+vivado/
+
+# Compiled binaries
+sw/sdio_test
+sw/*.o
+
+# Python
+__pycache__/
+*.pyc
+
+# OS
+.DS_Store
