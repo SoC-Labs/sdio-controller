@@ -1,7 +1,7 @@
 # PYNQ-Z2 standalone example
 
 A minimal Vivado project and Linux userspace test harness that exercises
-`rtl/sdspi/` directly over AXI-Lite (control) + AXI4 DMA (data) on real
+`rtl/` directly over AXI-Lite (control) + AXI4 DMA (data) on real
 PYNQ-Z2 hardware, independent of the MegaSoC chip integration. This is the
 setup used to produce the validated configuration in the top-level README
 (4-bit, 50 MHz, phase 24, SDMULTI=1 -- see `docs/sdio_verification_report.md`).
@@ -14,7 +14,7 @@ on PYNQ-Z2).
 ```
 bd/pynq_sdio_top.tcl   Block design build script (PS7 <-> sdio_top)
 constrs/*.xdc          Pin map (PMOD JA) and timing constraints
-rtl/top/pynq_sdio_top.v  Board-level top wrapper around rtl/sdspi/sdio.v
+rtl/top/pynq_sdio_top.v  Board-level top wrapper around rtl/sdio.v
 sw/                    Linux userspace test harness for PYNQ-Z2
 ```
 
@@ -38,7 +38,7 @@ range -- set via `assign_bd_address` in the block design script).
 
 1. Create a new Vivado 2024.1 RTL project targeting part `xc7z020clg400-1`
    (or board part `tul.com.tw:pynq-z2:part0:1.0` if installed).
-2. Add all of `rtl/sdspi/*.v` (from the repo root) plus `rtl/top/pynq_sdio_top.v`
+2. Add all of `rtl/*.v` (from the repo root) plus `rtl/top/pynq_sdio_top.v`
    (from this directory) as design sources.
 3. Add `constrs/pynq_sdio_pinmap.xdc` and `constrs/pynq_sdio_timing.xdc` as
    constraint sources.

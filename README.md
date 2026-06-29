@@ -24,14 +24,14 @@ against the Synopsys VC-VIP-SOC eMMC/SD card UVM agent.
 ## Repository structure
 
 ```
-rtl/sdspi/        18 synthesisable RTL files (ZipCPU SDIO core, AXI-Lite + DMA path)
+rtl/              18 synthesisable RTL files (ZipCPU SDIO core, AXI-Lite + DMA path)
 sw/               sdiodrv.c and sdiodrv.h (AXI-Lite software driver)
 docs/             Verification reports (FPGA bring-up, Synopsys VIP)
 examples/pynq_z2/ Standalone PYNQ-Z2 Vivado project + Linux test harness --
                   see examples/pynq_z2/README.md to build/regenerate and run it
 ```
 
-The `rtl/sdspi/` file list is exactly the set referenced by the SDIO IP
+The `rtl/` file list is exactly the set referenced by the SDIO IP
 filelist used in the MegaSoC integration (`megasoc_tech/flist/IP/SDIO.flist`).
 It does not include the SPI-mode driver files (`sdspi.v`, `spicmd.v`,
 `spirxdata.v`, `spitxdata.v`, `llsdspi.v`, `exportspi.v`) or the
@@ -58,8 +58,8 @@ doubles, not part of the reusable IP.
    ```bash
    git submodule add https://git.soton.ac.uk/soclabs/sdio-controller.git
    ```
-2. Add `rtl/sdspi/*.v` to your project filelist.
-3. Instantiate `sdio`/`sdfrontend` from `rtl/sdspi/` in your top-level RTL.
+2. Add `rtl/*.v` to your project filelist.
+3. Instantiate `sdio`/`sdfrontend` from `rtl/` in your top-level RTL.
 4. Add `sw/sdiodrv.c` and `sw/sdiodrv.h` to your software build.
 5. AXI-Lite base address and DMA configuration depend on your SoC interconnect.
 
