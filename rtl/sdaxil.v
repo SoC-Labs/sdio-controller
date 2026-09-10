@@ -2637,10 +2637,26 @@ module	sdaxil #(
 			r_sd2s_data <= 32'h0;
 		end else if (dma_read_fifo && (!OPT_LOWPOWER || pre_valid))
 		begin
+			// tx_fifo_a/tx_fifo_b hold each received word byte-reversed
+			// (see sdrxframe.v's OPT_LITTLE_ENDIAN swap, which is what
+			// fills the RX side of this FIFO). The PIO register-read
+			// path (ADDR_FIFOA/ADDR_FIFOB, below) leaves that reversal
+			// in place because the software driver's sdio_store_word()
+			// already compensates for it when copying out of the FIFO
+			// registers. The DMA engine has no such software
+			// compensation point -- it writes o_sd2s_data straight into
+			// memory via SDIO_M_AXI -- so undo the reversal here,
+			// specifically for the DMA-facing copy of the data.
 			if (dma_fifo)
-				r_sd2s_data <= tx_fifo_b;
+				r_sd2s_data <= (OPT_LITTLE_ENDIAN)
+					? { tx_fifo_b[7:0], tx_fifo_b[15:8],
+						tx_fifo_b[23:16], tx_fifo_b[31:24] }
+					: tx_fifo_b;
 			else
-				r_sd2s_data <= tx_fifo_a;
+				r_sd2s_data <= (OPT_LITTLE_ENDIAN)
+					? { tx_fifo_a[7:0], tx_fifo_a[15:8],
+						tx_fifo_a[23:16], tx_fifo_a[31:24] }
+					: tx_fifo_a;
 		end
 
 		assign	o_sd2s_data = r_sd2s_data;

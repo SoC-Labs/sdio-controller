@@ -51,6 +51,22 @@
 `timescale		1ns / 1ps
 `default_nettype	none
 // }}}
+// SDFRONTEND_SPLIT_TRISTATE (opt-in, off by default): selects this
+// module's split tristate port interface (io_cmd_tristate/o_cmd/i_cmd/
+// io_dat_tristate/o_dat/i_dat) instead of the plain `inout` form, for
+// integrators who need to wire their own pad tristate buffers externally
+// (e.g. MegaSoC's megasoc_chip.v). Deliberately a dedicated macro rather
+// than reusing `VERILATOR`: this file previously hijacked `VERILATOR` for
+// that purpose, but that name is not ours to redefine -- a real Verilator
+// build already defines it, and a project-wide `+define+VERILATOR` also
+// flips unrelated `ifdef VERILATOR` code inside other vendored IP (e.g.
+// Arm's Cortex-A53, where it broke VCS's UPF/low-power analysis:
+// "Error-[UPF_CFCIL] Cannot find cell ... u_inter_clkgate_*"). Left
+// undefined, every existing consumer of this file (including the
+// PYNQ-Z2 example under examples/, which relies on the plain `inout`
+// form and this module's own internal IOBUFs) is unaffected; integrators
+// who need the split form pass `+define+SDFRONTEND_SPLIT_TRISTATE`
+// themselves.
 module	sdfrontend #(
 		// {{{
 		parameter [0:0]	OPT_SERDES = 1'b0,
@@ -108,7 +124,7 @@ module	sdfrontend #(
 		output	wire			o_ck,
 		input	wire			i_ds,
 		//
-`ifdef	VERILATOR
+`ifdef	SDFRONTEND_SPLIT_TRISTATE
 		output	wire			io_cmd_tristate,
 		output	wire			o_cmd,
 		input	wire			i_cmd,
@@ -133,7 +149,7 @@ module	sdfrontend #(
 	wire		raw_cmd;
 	wire	[NUMIO-1:0]	raw_iodat;
 	wire		w_cmd_collision;
-`ifndef	VERILATOR
+`ifndef	SDFRONTEND_SPLIT_TRISTATE
 	wire			io_cmd_tristate, i_cmd, o_cmd;
 	wire	[NUMIO-1:0]	io_dat_tristate, i_dat, o_dat;
 `endif
@@ -1619,7 +1635,7 @@ module	sdfrontend #(
 	//
 	// IO buffers --- if not using Verilator
 	// {{{
-`ifndef	VERILATOR
+`ifndef	SDFRONTEND_SPLIT_TRISTATE
 
 	IOBUF
 	u_cmdbuf( .T(io_cmd_tristate), .I(o_cmd), .IO(io_cmd), .O(i_cmd));
@@ -1635,8 +1651,9 @@ module	sdfrontend #(
 		);
 	end endgenerate
 // else
-	// If we are using Verilator, then the IO buffers are handled
-	// externally as part of the C++ model.
+	// If SDFRONTEND_SPLIT_TRISTATE is set, the IO buffers are handled
+	// externally by the integrator (e.g. Verilator's C++ model, or
+	// MegaSoC's own pad tristate buffers).
 `endif
 	// }}}
 endmodule
