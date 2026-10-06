@@ -47,7 +47,7 @@ module	sdckgen #(
 		// To hit 100kHz from a 100MHz clock, we'll need to divide by
 		// 4, and then by another 250.  Hence, we'll need Lg(256)-2
 		// bits.  (The first three are special)
-		localparam	LGMAXDIV = 8
+		parameter	LGMAXDIV = 8
 		// }}}
 	) (
 		// {{{

@@ -67,7 +67,7 @@ module	sdwb #(
 		// {{{
 		parameter	LGFIFO = 15,	// Log_2(FIFO size in bytes)
 		parameter	NUMIO=4,
-		localparam	MW = 32,
+		parameter	MW = 32,
 		parameter [0:0]	OPT_LITTLE_ENDIAN = 1'b0,
 		parameter [0:0]	OPT_SERDES = 1'b0,
 		parameter [0:0]	OPT_DS = OPT_SERDES,
@@ -75,7 +75,7 @@ module	sdwb #(
 		parameter [0:0]	OPT_CARD_DETECT = 1'b1,
 		parameter [0:0]	OPT_EMMC = 1'b1,
 		parameter [0:0]	OPT_CRCTOKEN = 1'b1,
-		localparam	LGFIFOW=LGFIFO-$clog2(MW/8),
+		parameter	LGFIFOW=LGFIFO-$clog2(MW/8),
 		parameter [0:0]	OPT_DMA = 1'b0,
 		parameter	DMA_AW = 30,
 		parameter [0:0]	OPT_STREAM = 1'b0,

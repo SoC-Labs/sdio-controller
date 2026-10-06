@@ -108,8 +108,8 @@ module	sdax_s2mm #(
 		// participating in QOS arbitration.
 		parameter [3:0]		DEF_AWQOS = 4'h0,
 		// Abbreviations
-		localparam	DW = BUS_WIDTH,
-		localparam	AW = ADDRESS_WIDTH
+		parameter	DW = BUS_WIDTH,
+		parameter	AW = ADDRESS_WIDTH
 		// }}}
 	) (
 		// {{{

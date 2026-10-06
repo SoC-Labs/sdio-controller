@@ -46,7 +46,7 @@ module	sddma_rxgears #(
 		parameter	BUS_WIDTH = 64,
 		parameter [0:0]	OPT_LITTLE_ENDIAN = 1'b0,
 		// Abbreviations
-		localparam	DW = BUS_WIDTH
+		parameter	DW = BUS_WIDTH
 		// }}}
 	) (
 		// {{{

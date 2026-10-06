@@ -45,7 +45,7 @@ module	sdrxframe #(
 		// {{{
 		parameter	LGLEN = 15, NUMIO=4,
 		parameter	MW = 32,
-		localparam	LGLENW = LGLEN-$clog2(MW/8),
+		parameter	LGLENW = LGLEN-$clog2(MW/8),
 		parameter [0:0]	OPT_LITTLE_ENDIAN = 1'b0,
 		parameter [0:0]	OPT_DS = 1'b0,
 		parameter [0:0]	OPT_LOWPOWER = 1'b0,

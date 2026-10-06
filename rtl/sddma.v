@@ -60,10 +60,10 @@ module	sddma #(
 		parameter [AXI_IW-1:0]	AXI_READ_ID  = 0,
 		parameter [AXI_IW-1:0]	AXI_WRITE_ID = 0,
 		parameter	OPT_LITTLE_ENDIAN = 1'b1,
-		localparam	AW = ADDRESS_WIDTH,	// DMA address width
+		parameter 	AW = ADDRESS_WIDTH,	// DMA address width
 `else
 		parameter	OPT_LITTLE_ENDIAN = 1'b0,
-		localparam	AW = ADDRESS_WIDTH-$clog2(DW/8),
+		parameter	AW = ADDRESS_WIDTH-$clog2(DW/8),
 `endif
 		parameter [0:0]	OPT_ISTREAM = 0,
 		parameter [0:0]	OPT_OSTREAM = 0,

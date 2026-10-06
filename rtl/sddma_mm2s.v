@@ -49,8 +49,8 @@ module	sddma_mm2s #(
 		parameter [0:0]	OPT_LOWPOWER = 1'b0,
 		parameter [0:0] OPT_FIRSTBEAT_TRIM = 1'b0,
 		// Abbreviations
-		localparam	DW = BUS_WIDTH,
-		localparam	AW = ADDRESS_WIDTH-$clog2(DW/8)
+		parameter	DW = BUS_WIDTH,
+		parameter	AW = ADDRESS_WIDTH-$clog2(DW/8)
 		// }}}
 	) (
 		// {{{

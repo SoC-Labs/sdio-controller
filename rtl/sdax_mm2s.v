@@ -63,7 +63,7 @@ module	sdax_mm2s #(
 		parameter	LGFIFO = LGMAXBURST+1,
 		//
 		// The bottom AXILSB bits of any AXI address are subword bits
-		localparam	AXILSB = $clog2(BUS_WIDTH/8),
+		parameter	AXILSB = $clog2(BUS_WIDTH/8),
 		//
 		// LGLENGTH: Log based 2 of the maximum number of bytes that
 		// will ever be transferred in one request
