@@ -1845,9 +1845,16 @@ module	sdaxil #(
 		next_tx_mem = next_tx_mem >> (32*tx_shift);
 	end
 
+	// sdtxframe.v sends S_DATA[31:24] first. With OPT_LITTLE_ENDIAN, FIFO
+	// words are in memory byte order (byte 0 in bits [7:0], whether written
+	// by the CPU or by the DMA), so reverse them here to put byte 0 on the
+	// card first -- the mirror of sdrxframe.v's receive-side swap.
 	always @(posedge i_clk)
 	if ((!o_tx_mem_valid || i_tx_mem_ready) && !r_tx_sent)
-		o_tx_mem_data <= next_tx_mem[31:0];
+		o_tx_mem_data <= (OPT_LITTLE_ENDIAN)
+			? { next_tx_mem[7:0], next_tx_mem[15:8],
+				next_tx_mem[23:16], next_tx_mem[31:24] }
+			: next_tx_mem[31:0];
 	// }}}
 
 	// o_tx_mem_last
@@ -2637,26 +2644,16 @@ module	sdaxil #(
 			r_sd2s_data <= 32'h0;
 		end else if (dma_read_fifo && (!OPT_LOWPOWER || pre_valid))
 		begin
-			// tx_fifo_a/tx_fifo_b hold each received word byte-reversed
-			// (see sdrxframe.v's OPT_LITTLE_ENDIAN swap, which is what
-			// fills the RX side of this FIFO). The PIO register-read
-			// path (ADDR_FIFOA/ADDR_FIFOB, below) leaves that reversal
-			// in place because the software driver's sdio_store_word()
-			// already compensates for it when copying out of the FIFO
-			// registers. The DMA engine has no such software
-			// compensation point -- it writes o_sd2s_data straight into
-			// memory via SDIO_M_AXI -- so undo the reversal here,
-			// specifically for the DMA-facing copy of the data.
+			// With OPT_LITTLE_ENDIAN, sdrxframe.v already stores each
+			// received word with the first byte from the card in bits
+			// [7:0], i.e. in memory byte order, so the DMA copies it
+			// unchanged. (An earlier change reversed it again here; that
+			// only matched round trips because the transmit path was
+			// reversing too -- see o_tx_mem_data.)
 			if (dma_fifo)
-				r_sd2s_data <= (OPT_LITTLE_ENDIAN)
-					? { tx_fifo_b[7:0], tx_fifo_b[15:8],
-						tx_fifo_b[23:16], tx_fifo_b[31:24] }
-					: tx_fifo_b;
+				r_sd2s_data <= tx_fifo_b;
 			else
-				r_sd2s_data <= (OPT_LITTLE_ENDIAN)
-					? { tx_fifo_a[7:0], tx_fifo_a[15:8],
-						tx_fifo_a[23:16], tx_fifo_a[31:24] }
-					: tx_fifo_a;
+				r_sd2s_data <= tx_fifo_a;
 		end
 
 		assign	o_sd2s_data = r_sd2s_data;
@@ -3596,7 +3593,9 @@ module	sdaxil #(
 
 	always @(posedge i_clk)
 	if (!i_reset && o_tx_mem_valid && f_txaddr == fc_addr)
-		assert(o_tx_mem_data == f_word);
+		assert(o_tx_mem_data == ((OPT_LITTLE_ENDIAN)
+			? { f_word[7:0], f_word[15:8], f_word[23:16], f_word[31:24] }
+			: f_word[31:0]));
 
 	always @(posedge i_clk)
 	if (!i_reset && o_tx_mem_valid)
