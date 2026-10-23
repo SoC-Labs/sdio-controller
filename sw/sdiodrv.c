@@ -501,12 +501,14 @@ static void sdio_wait_while_busy(SDIODRV *dev)
     (void)sdio_wait_while_busy_timeout(dev);
 }
 
+// FIFO words are in memory byte order: with OPT_LITTLE_ENDIAN the controller
+// puts the first byte from the card in bits [7:0], so byte 0 is stored first.
 static void sdio_store_word(char *dst, uint32_t word)
 {
-	dst[0] = (char)((word >> 24) & 0x0ff);
-	dst[1] = (char)((word >> 16) & 0x0ff);
-	dst[2] = (char)((word >>  8) & 0x0ff);
-	dst[3] = (char)( word        & 0x0ff);
+	dst[0] = (char)( word        & 0x0ff);
+	dst[1] = (char)((word >>  8) & 0x0ff);
+	dst[2] = (char)((word >> 16) & 0x0ff);
+	dst[3] = (char)((word >> 24) & 0x0ff);
 }
 
 void	sdio_go_idle(SDIODRV *dev) {				// CMD0
