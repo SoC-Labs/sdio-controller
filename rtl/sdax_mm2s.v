@@ -2384,3 +2384,4 @@ module	sdax_mm2s #(
 `endif
 // }}}
 endmodule
+`default_nettype wire

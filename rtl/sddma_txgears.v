@@ -760,3 +760,4 @@ module	sddma_txgears #(
 `endif
 // }}}
 endmodule
+`default_nettype wire

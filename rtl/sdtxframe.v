@@ -2073,4 +2073,4 @@ module	sdtxframe #(
 `endif	// FORMAL
 // }}}
 endmodule
-
+`default_nettype wire

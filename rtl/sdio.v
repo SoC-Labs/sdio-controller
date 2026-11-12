@@ -855,3 +855,4 @@ module	sdio #(
 	// verilator coverage_on
 	// }}}
 endmodule
+`default_nettype wire

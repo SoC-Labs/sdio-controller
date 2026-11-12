@@ -1657,3 +1657,4 @@ module	sdfrontend #(
 `endif
 	// }}}
 endmodule
+`default_nettype wire

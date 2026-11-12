@@ -1820,3 +1820,4 @@ cover(fc_posn == 0 && fc_data == 8'h7e);
 `endif	// FORMAL
 // }}}
 endmodule
+`default_nettype wire

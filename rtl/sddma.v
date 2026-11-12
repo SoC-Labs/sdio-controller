@@ -731,4 +731,4 @@ module	sddma #(
 	// verilator coverage_on
 	// }}}
 endmodule
-
+`default_nettype wire

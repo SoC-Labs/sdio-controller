@@ -1242,3 +1242,4 @@ module	sdcmd #(
 `endif	// FORMAL
 // }}}
 endmodule
+`default_nettype wire

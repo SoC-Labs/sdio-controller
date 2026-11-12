@@ -2005,3 +2005,4 @@ module	sdax_s2mm #(
 `endif
 // }}}
 endmodule
+`default_nettype wire
