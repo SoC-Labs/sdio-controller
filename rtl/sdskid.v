@@ -498,3 +498,4 @@ module sdskid #(
 `endif
 // }}}
 endmodule
+`default_nettype wire

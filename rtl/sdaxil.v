@@ -3796,4 +3796,4 @@ module	sdaxil #(
 `endif	// FORMAL
 // }}}
 endmodule
-
+`default_nettype wire

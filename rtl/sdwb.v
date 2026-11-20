@@ -3600,3 +3600,4 @@ module	sdwb #(
 `endif	// FORMAL
 // }}}
 endmodule
+`default_nettype wire

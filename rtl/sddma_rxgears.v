@@ -542,3 +542,4 @@ module	sddma_rxgears #(
 `endif
 // }}}
 endmodule
+`default_nettype wire

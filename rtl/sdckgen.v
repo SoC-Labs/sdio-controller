@@ -432,4 +432,4 @@ module	sdckgen #(
 `endif	// FORMAL
 // }}}
 endmodule
-
+`default_nettype wire

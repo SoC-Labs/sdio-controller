@@ -482,3 +482,4 @@ module sdfifo #(
 `endif // FORMAL
 // }}}
 endmodule
+`default_nettype wire

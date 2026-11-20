@@ -803,3 +803,4 @@ module afifo #(
 `endif
 // }}}
 endmodule
+`default_nettype wire
