@@ -75,6 +75,12 @@ module	sdfrontend #(
 		parameter [0:0]	OPT_COLLISION = 1'b0,
 		parameter [0:0]	OPT_CRCTOKEN = 1'b1,
 		parameter 	BUSY_CLOCKS = 4,
+		// TOKEN_CLOCKS: SD clocks to wait, after a transmitted data
+		// block, for the card's CRC status token before the card busy
+		// detection is allowed to start.  The token ends 7 clocks after
+		// the block (2 clocks, start bit, 3 status bits, end bit); the
+		// transmit framer gives up after 15.
+		parameter	TOKEN_CLOCKS = 12,
 		parameter	HWBIAS = (OPT_SERDES ? 7 : 0),
 		parameter	NUMIO = 8
 		// }}}
@@ -145,6 +151,7 @@ module	sdfrontend #(
 	// {{{
 	genvar		gk;
 	reg		dat0_busy, wait_for_busy;
+	wire		tx_token_wait;
 	reg	[$clog2(BUSY_CLOCKS+1)-1:0]	busy_count;
 	wire		raw_cmd;
 	wire	[NUMIO-1:0]	raw_iodat;
@@ -170,6 +177,62 @@ module	sdfrontend #(
 	assign	next_pedge = ~{ last_ck, i_sdclk[7:1] } &  i_sdclk[7:0];
 	assign	next_nedge =  { last_ck, i_sdclk[7:1] } & ~i_sdclk[7:0];
 	assign	next_dedge = next_pedge | (i_cfg_ddr ? next_nedge : 8'h0);
+	// }}}
+
+	// tx_token_wait
+	// {{{
+	// A card answers every written data block with a CRC status token on
+	// DAT0: two clocks after our end bit comes a start bit (0), three
+	// status bits (010 = accepted) and an end bit (1).  Only after that
+	// token does the card pull DAT0 low for as long as it is busy.
+	//
+	// The busy detection below assumes "busy" for BUSY_CLOCKS clocks after
+	// we stop driving and then follows DAT0: the first high sample clears
+	// busy, and nothing sets it again before the next command or block.
+	// Started straight after our transmission, that window ends inside the
+	// token, the token's high bits clear busy, and the card's real busy,
+	// which begins after the token, is never seen.  The controller then
+	// reports the card ready while it is still programming, and sends the
+	// next block of a multi-block write into a busy card.
+	//
+	// tx_token_wait holds the busy detection in its "assume busy" state
+	// from the end of our transmission until the token has been seen, or
+	// until TOKEN_CLOCKS clocks have passed without one.  The BUSY_CLOCKS
+	// window and the DAT0 tracking then start from the end of the token,
+	// where the card's busy begins.
+	generate if (OPT_CRCTOKEN)
+	begin : GEN_TOKEN_WAIT
+		reg		r_last_data_en, r_token_wait;
+		reg	[$clog2(TOKEN_CLOCKS+1)-1:0]	r_token_count;
+
+		initial	r_last_data_en = 1'b0;
+		always @(posedge i_clk)
+			r_last_data_en <= !i_reset && i_data_en;
+
+		initial	r_token_wait = 1'b0;
+		always @(posedge i_clk)
+		if (i_reset || i_data_en || i_rx_en)
+			r_token_wait <= 1'b0;
+		else if (r_last_data_en)
+			// Our transmission has just ended
+			r_token_wait <= 1'b1;
+		else if (sync_ack || sync_nak || ck_ack || ck_nak
+						|| r_token_count == 0)
+			// Token seen, or no token came
+			r_token_wait <= 1'b0;
+
+		initial	r_token_count = TOKEN_CLOCKS;
+		always @(posedge i_clk)
+		if (i_reset || !r_token_wait)
+			r_token_count <= TOKEN_CLOCKS;
+		else if ((|next_pedge) && r_token_count != 0)
+			r_token_count <= r_token_count - 1;
+
+		assign	tx_token_wait = r_token_wait
+					|| (r_last_data_en && !i_rx_en);
+	end else begin : NO_TOKEN_WAIT
+		assign	tx_token_wait = 1'b0;
+	end endgenerate
 	// }}}
 	generate if (!OPT_SERDES && !OPT_DDR)
 	begin : GEN_NO_SERDES
@@ -356,7 +419,7 @@ module	sdfrontend #(
 		// {{{
 		initial	busy_count = 0;
 		always @(posedge i_clk)
-		if (i_reset || i_cmd_en || i_data_en)
+		if (i_reset || i_cmd_en || i_data_en || tx_token_wait)
 			busy_count <= BUSY_CLOCKS;
 		else if (sample_pck && busy_count > 0)
 			busy_count <= busy_count-1;
@@ -369,6 +432,11 @@ module	sdfrontend #(
 			// *MUST* clear busy on i_data_en, else we'd overwrite
 			// the busy bit anyway by transmitting
 			dat0_busy <= 1'b0;
+			wait_for_busy <= 1'b1;
+		end else if (tx_token_wait)
+		begin
+			// Assume busy until the CRC status token is over
+			dat0_busy <= 1'b1;
 			wait_for_busy <= 1'b1;
 		end else if (dat0_busy && !i_dat[0] && !wait_for_busy)
 		begin
@@ -694,7 +762,7 @@ module	sdfrontend #(
 		// {{{
 		initial	busy_count = (OPT_CRCTOKEN) ? 3'h0 : 3'h4;
 		always @(posedge i_clk)
-		if (i_reset || i_cmd_en || i_data_en)
+		if (i_reset || i_cmd_en || i_data_en || tx_token_wait)
 			// Clock periods to wait until busy is active
 			busy_count <= BUSY_CLOCKS;
 		else if (sample_pck != 0 && busy_count > 0)
@@ -713,6 +781,11 @@ module	sdfrontend #(
 		if (i_reset || i_data_en)
 		begin
 			dat0_busy <= 1'b0;
+			wait_for_busy <= 1'b1;
+		end else if (tx_token_wait)
+		begin
+			// Assume busy until the CRC status token is over
+			dat0_busy <= 1'b1;
 			wait_for_busy <= 1'b1;
 		end else if (dat0_busy && !wait_for_busy &&
 			((sample_pck == 0)
@@ -1066,7 +1139,7 @@ module	sdfrontend #(
 		// busy_count: SD clock cycles to wait before busy is asserted
 		// {{{
 		always @(posedge i_clk)
-		if (i_reset || i_cmd_en || i_data_en)
+		if (i_reset || i_cmd_en || i_data_en || tx_token_wait)
 			busy_count <= BUSY_CLOCKS;
 		else if (busy_strb != 0 && busy_count > 0)
 			busy_count <= busy_count - 1;
@@ -1087,6 +1160,11 @@ module	sdfrontend #(
 		if (i_reset || i_data_en)
 		begin
 			dat0_busy <= 1'b0;
+			wait_for_busy <= 1'b1;
+		end else if (tx_token_wait)
+		begin
+			// Assume busy until the CRC status token is over
+			dat0_busy <= 1'b1;
 			wait_for_busy <= 1'b1;
 		end else if (dat0_busy && !wait_for_busy && busy_pin)
 		begin
